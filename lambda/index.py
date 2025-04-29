@@ -5,6 +5,7 @@ import boto3
 import re  # 正規表現モジュールをインポート
 from botocore.exceptions import ClientError
 import urllib.request # ※追加
+import time # ※追加
 
 # Lambda コンテキストからリージョンを抽出する関数
 def extract_region_from_arn(arn):
@@ -76,6 +77,7 @@ def lambda_handler(event, context):
         print("Calling Bedrock invoke_model API with payload:", json.dumps(request_payload))
         
         # invoke_model APIを呼び出し ※変更
+        start_time = time.time()
         request = urllib.request.Request(
             f"{MODEL_ID}/generate",
             data=json.dumps(request_payload).encode("utf-8"),
@@ -86,7 +88,7 @@ def lambda_handler(event, context):
             # レスポンスを解析
             response_body = json.loads(response.read().decode("utf-8"))
             print("Bedrock response:", json.dumps(response_body, default=str))
-        
+        total_time = time.time() - start_time
         # 応答の検証
         if not response_body.get('output') or not response_body['output'].get('message') or not response_body['output']['message'].get('content'):
             raise Exception("No response content from the model")
@@ -109,10 +111,9 @@ def lambda_handler(event, context):
                 "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
                 "Access-Control-Allow-Methods": "OPTIONS,POST"
             },
-            "body": json.dumps({
-                "success": True,
-                "response": assistant_response,
-                "conversationHistory": messages
+            "body": json.dumps({ # ※変更
+                "generated_text": message,
+                "response_time": total_time
             })
         }
         
@@ -127,8 +128,13 @@ def lambda_handler(event, context):
                 "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
                 "Access-Control-Allow-Methods": "OPTIONS,POST"
             },
-            "body": json.dumps({
-                "success": False,
-                "error": str(error)
-            })
+            "body": json.dumps(
+                {
+                "detail": [{
+                    "loc": [message, 0],
+                    "msg": str(error),
+                    "type": message
+                    }]
+                })
+                    
         }
