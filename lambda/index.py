@@ -111,7 +111,7 @@ def lambda_handler(event, context):
                 "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
                 "Access-Control-Allow-Methods": "OPTIONS,POST"
             },
-            "body": json.dumps(response_body, ensure_ascii=False) # ※変更
+            "body": json.dumps(response_body) # ※変更
         }
         
     except Exception as error:
