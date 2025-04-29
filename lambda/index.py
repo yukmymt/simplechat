@@ -57,14 +57,17 @@ def lambda_handler(event, context):
         })
         
         # モデル用のリクエストペイロードを構築
-        # 会話履歴を含める
-        bedrock_messages = []
-        for msg in messages: # ※変更
-            bedrock_messages.append(msg["content"])
-        
+        # 会話履歴を含める ※変更
+        prompt = ""
+        for msg in messages:
+            if msg["role"] == "user":
+                prompt += "ユーザー: " + msg["content"] + "\n"
+            elif msg["role"] == "assistant":
+                prompt += "アシスタント: " + msg["content"] + "\n"
+
         # invoke_model用のリクエストペイロード ※変更
         request_payload = {
-            "prompt": ''.join(bedrock_messages),
+            "prompt": prompt,
             "max_new_tokens": 512,
             "temperature": 0.7,
             "top_p": 0.9,
@@ -87,11 +90,11 @@ def lambda_handler(event, context):
             print("Bedrock response:", json.dumps(response_body, default=str))
         total_time = time.time() - start_time
         # 応答の検証
-        if not response_body.get('output') or not response_body['output'].get('message') or not response_body['output']['message'].get('content'):
-            raise Exception("No response content from the model")
+        if not response_body.get('generated_text'):
+            raise Exception("No generated_text in the model response")
         
         # アシスタントの応答を取得
-        assistant_response = response_body['output']['message']['content'][0]['text']
+        assistant_response = response_body['generated_text']
         
         # アシスタントの応答を会話履歴に追加
         messages.append({
@@ -108,10 +111,7 @@ def lambda_handler(event, context):
                 "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
                 "Access-Control-Allow-Methods": "OPTIONS,POST"
             },
-            "body": json.dumps({ # ※変更
-                "generated_text": response_body,
-                "response_time": total_time
-            })
+            "body": json.dumps(response_body, ensure_ascii=False) # ※変更
         }
         
     except Exception as error:
