@@ -20,8 +20,8 @@ bedrock_client = None
 
 # モデルID
 #MODEL_ID = os.environ.get("MODEL_ID", "us.amazon.nova-lite-v1:0")
-MODEL_ID = "https://7278-34-16-135-8.ngrok-free.app/"
-
+MODEL_ID = "https://9e92-34-127-93-183.ngrok-free.app"
+  
 def lambda_handler(event, context):
     try:
         # コンテキストから実行リージョンを取得し、クライアントを初期化
@@ -40,7 +40,7 @@ def lambda_handler(event, context):
             print(f"Authenticated user: {user_info.get('email') or user_info.get('cognito:username')}")
         
         # リクエストボディの解析
-        body = json.loads(event['body'])
+        body = json.loads(event['body'].encode("utf-8"))
         message = body['message']
         conversation_history = body.get('conversationHistory', [])
         
@@ -60,14 +60,11 @@ def lambda_handler(event, context):
         # 会話履歴を含める
         bedrock_messages = []
         for msg in messages: # ※変更
-            bedrock_messages.append({ 
-                "role": msg["role"],
-                "content": [{"text": msg["content"]}]
-            })
+            bedrock_messages.append(msg["content"])
         
         # invoke_model用のリクエストペイロード ※変更
         request_payload = {
-            "prompt": bedrock_messages,
+            "prompt": ''.join(bedrock_messages),
             "max_new_tokens": 512,
             "temperature": 0.7,
             "top_p": 0.9,
@@ -80,7 +77,7 @@ def lambda_handler(event, context):
         start_time = time.time()
         request = urllib.request.Request(
             f"{MODEL_ID}/generate",
-            data=json.dumps(request_payload).encode("utf-8"),
+            data=json.dumps(request_payload).encode('utf-8'),
             headers={"Content-Type": "application/json"},
             method="POST"
         )
@@ -112,7 +109,7 @@ def lambda_handler(event, context):
                 "Access-Control-Allow-Methods": "OPTIONS,POST"
             },
             "body": json.dumps({ # ※変更
-                "generated_text": message,
+                "generated_text": response_body,
                 "response_time": total_time
             })
         }
@@ -131,10 +128,10 @@ def lambda_handler(event, context):
             "body": json.dumps(
                 {
                 "detail": [{
-                    "loc": [message, 0],
+                    "loc": ["body", 0],
                     "msg": str(error),
-                    "type": message
-                    }]
-                })
+                    "type": "error"
+                }]
+        })
                     
         }
