@@ -20,7 +20,7 @@ bedrock_client = None
 
 # モデルID
 #MODEL_ID = os.environ.get("MODEL_ID", "us.amazon.nova-lite-v1:0")
-MODEL_ID = "https://9e92-34-127-93-183.ngrok-free.app"
+MODEL_ID = "https://4b52-34-141-253-94.ngrok-free.app"
   
 def lambda_handler(event, context):
     try:
@@ -57,13 +57,14 @@ def lambda_handler(event, context):
         })
         
         # モデル用のリクエストペイロードを構築
-        # 会話履歴を含める ※変更
-        prompt = ""
-        for msg in messages:
-            if msg["role"] == "user":
-                prompt += "ユーザー: " + msg["content"] + "\n"
-            elif msg["role"] == "assistant":
-                prompt += "アシスタント: " + msg["content"] + "\n"
+        # 会話履歴を含めない ※変更
+        prompt = message
+        #prompt = ""
+        #for msg in messages:
+        #    if msg["role"] == "user":
+        #        prompt += "ユーザー: " + msg["content"] + "\n"
+        #    elif msg["role"] == "assistant":
+        #        prompt += "アシスタント: " + msg["content"] + "\n"
 
         # invoke_model用のリクエストペイロード ※変更
         request_payload = {
