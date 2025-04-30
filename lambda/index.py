@@ -112,27 +112,25 @@ def lambda_handler(event, context):
                 "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
                 "Access-Control-Allow-Methods": "OPTIONS,POST"
             },
-            "body": json.dumps(response_body["generated_text"]) # ※変更
+            "body": json.dumps({
+                "success": True,
+                "response": response_body['generated_text'],
+                }) # ※変更
         }
-        
+    
     except Exception as error:
         print("Error:", str(error))
-        
-        return {
-            "statusCode": 500,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-                "Access-Control-Allow-Methods": "OPTIONS,POST"
+    
+    return {
+        "statusCode": 500,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+            "Access-Control-Allow-Methods": "OPTIONS,POST"
             },
-            "body": json.dumps(
-                {
-                "detail": [{
-                    "loc": ["body", 0],
-                    "msg": str(error),
-                    "type": "error"
-                }]
+        "body": json.dumps({
+            "success": False,
+            "error": str(error)
         })
-                    
-        }
+    }
